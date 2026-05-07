@@ -1,184 +1,188 @@
-import { motion } from 'framer-motion'
-import { TrendingUp, TrendingDown, Target, Wallet, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownLeft } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
-const MOCK_BALANCE = { ars: 1_450_000, usd: 820 }
-const MOCK_MES = { ingresos: 2_800_000, egresos: 1_350_000 }
-const MOCK_EQUILIBRIO = { target: 1_200_000, actual: 1_350_000 }
+const chartData: Record<string, any[]> = {
+  may: [
+    { name: 'LUN', Gastos: 42000, Ingresos: 0 },
+    { name: 'MAR', Gastos: 28000, Ingresos: 850000 },
+    { name: 'MIE', Gastos: 15000, Ingresos: 0 },
+    { name: 'JUE', Gastos: 65000, Ingresos: 0 },
+    { name: 'VIE', Gastos: 38000, Ingresos: 320 },
+    { name: 'SAB', Gastos: 22000, Ingresos: 0 },
+    { name: 'DOM', Gastos: 8000, Ingresos: 0 },
+  ],
+  abr: [
+    { name: 'LUN', Gastos: 35000, Ingresos: 0 },
+    { name: 'MAR', Gastos: 52000, Ingresos: 720000 },
+    { name: 'MIE', Gastos: 18000, Ingresos: 0 },
+    { name: 'JUE', Gastos: 41000, Ingresos: 0 },
+    { name: 'VIE', Gastos: 29000, Ingresos: 280 },
+    { name: 'SAB', Gastos: 11000, Ingresos: 0 },
+    { name: 'DOM', Gastos: 6000, Ingresos: 0 },
+  ],
+}
 
-const MOCK_EVOLUCION = [
-  { mes: 'Dic', ingresos: 1800000, egresos: 1100000 },
-  { mes: 'Ene', ingresos: 2100000, egresos: 1250000 },
-  { mes: 'Feb', ingresos: 1900000, egresos: 980000 },
-  { mes: 'Mar', ingresos: 2400000, egresos: 1400000 },
-  { mes: 'Abr', ingresos: 2200000, egresos: 1180000 },
-  { mes: 'May', ingresos: 2800000, egresos: 1350000 },
-]
-
-const MOCK_CATEGORIAS = [
-  { name: 'Vivienda', value: 380000, color: '#3b82f6' },
-  { name: 'Alimentos', value: 280000, color: '#00c896' },
-  { name: 'Transporte', value: 145000, color: '#f59e0b' },
-  { name: 'Servicios', value: 210000, color: '#8b5cf6' },
-  { name: 'RE/MAX', value: 200000, color: '#f43f5e' },
-  { name: 'Otros', value: 135000, color: '#5c6b7a' },
-]
-
-const MOCK_ULTIMAS = [
-  { desc: 'Supermercado Disco', cat: 'Alimentos', monto: 12500, fecha: '06 may', tipo: 'egreso', usd: false },
-  { desc: 'Comisión venta Valle Escondido', cat: 'RE/MAX', monto: 850000, fecha: '05 may', tipo: 'ingreso', usd: false },
-  { desc: 'YPF combustible', cat: 'Transporte', monto: 28000, fecha: '04 may', tipo: 'egreso', usd: false },
-  { desc: 'Expensas dpto', cat: 'Vivienda', monto: 45000, fecha: '03 may', tipo: 'egreso', usd: false },
-  { desc: 'Payoneer recibo', cat: 'Ingresos', monto: 320, fecha: '02 may', tipo: 'ingreso', usd: true },
+const ULTIMAS = [
+  { desc: 'Supermercado Disco', cat: 'Alimentos', monto: 12500, fecha: 'Hoy, 14:20', tipo: 'egreso', scope: 'personal', usd: false },
+  { desc: 'Comision venta Valle Escondido', cat: 'Laboral', monto: 850000, fecha: 'Ayer, 09:00', tipo: 'ingreso', scope: 'laboral', usd: false },
+  { desc: 'YPF combustible', cat: 'Transporte', monto: 28000, fecha: '04 May', tipo: 'egreso', scope: 'mixto', usd: false },
+  { desc: 'Payoneer recibo', cat: 'Ingresos', monto: 320, fecha: '02 May', tipo: 'ingreso', scope: 'laboral', usd: true },
+  { desc: 'Expensas departamento', cat: 'Vivienda', monto: 45000, fecha: '01 May', tipo: 'egreso', scope: 'personal', usd: false },
 ]
 
 const TT = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="glass-strong rounded-xl px-4 py-3 text-xs">
-      <div className="mb-1" style={{ color: 'var(--text-soft)', fontWeight: 700 }}>{label}</div>
-      {payload.map((p: any) => (
-        <div key={p.name} className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-          <span style={{ color: 'var(--text-muted)' }}>{p.name}:</span>
-          <span style={{ color: 'var(--text)', fontWeight: 700 }}>{formatCurrency(p.value, 'ARS')}</span>
+    <div style={{ background: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '8px 14px', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+      <div style={{ color: 'var(--slate-400)', marginBottom: 4, fontWeight: 700 }}>{label}</div>
+      {payload.map((p: any) => p.value > 0 && (
+        <div key={p.name} style={{ color: p.name === 'Gastos' ? '#ec4899' : '#10b981', fontWeight: 700 }}>
+          {p.name}: {formatCurrency(p.value, 'ARS')}
         </div>
       ))}
     </div>
   )
 }
 
-const pct = Math.round((MOCK_EQUILIBRIO.actual / MOCK_EQUILIBRIO.target) * 100)
-
 export function Dashboard() {
-  const balance = MOCK_MES.ingresos - MOCK_MES.egresos
-  return (
-    <div className="space-y-5 pb-24 md:pb-6">
-      <div className="flex items-end justify-between">
-        <div>
-          <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--text-muted)' }}>Mayo 2026</p>
-          <h1 className="text-2xl mt-0.5" style={{ color: 'var(--text)', fontWeight: 800 }}>Hola, Martín</h1>
-        </div>
-        <div className="text-right">
-          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Balance consolidado</p>
-          <p className="text-xl mono mt-0.5" style={{ color: 'var(--green)', fontWeight: 800 }}>{formatCurrency(MOCK_BALANCE.ars, 'ARS')}</p>
-          <p className="text-xs mono" style={{ color: 'var(--text-muted)', fontWeight: 600 }}>+ {formatCurrency(MOCK_BALANCE.usd, 'USD')}</p>
-        </div>
-      </div>
+  const [period, setPeriod] = useState('may')
+  const pct = Math.round((1350000 / 1200000) * 100)
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+  return (
+    <div className="px-6 md:px-12 max-w-7xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {[
-          { label: 'Ingresos', value: MOCK_MES.ingresos, icon: TrendingUp, color: 'var(--green)', dim: 'var(--green-dim)', diff: '+12%' },
-          { label: 'Egresos', value: MOCK_MES.egresos, icon: TrendingDown, color: 'var(--red)', dim: 'var(--red-dim)', diff: '-5%' },
-          { label: 'Balance', value: balance, icon: Wallet, color: 'var(--blue)', dim: 'var(--blue-dim)', diff: '+18%' },
-          { label: 'Equilibrio', value: MOCK_EQUILIBRIO.target, icon: Target, color: 'var(--gold)', dim: 'var(--gold-dim)', diff: `${pct}%` },
+          { label: 'Ingresos del mes', value: 2800000, icon: TrendingUp, color: 'var(--emerald)', bg: 'rgba(16,185,129,0.15)', diff: '+12% vs mes anterior', ghost: DollarSign },
+          { label: 'Gastos del mes', value: 1350000, icon: TrendingDown, color: 'var(--pink)', bg: 'rgba(236,72,153,0.15)', diff: 'En presupuesto', ghost: TrendingDown },
         ].map((card, i) => {
           const Icon = card.icon
+          const Ghost = card.ghost
           return (
-            <motion.div key={card.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.07, duration: 0.4 }} className="glass rounded-2xl p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: card.dim }}>
-                  <Icon size={14} style={{ color: card.color }} />
+            <motion.div key={card.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+              <div className="glass" style={{ borderRadius: '2rem', padding: '1.5rem', boxShadow: '0 4px 24px rgba(0,0,0,0.4)', position: 'relative', overflow: 'hidden', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                <div style={{ position: 'absolute', top: 0, right: 0, padding: 20, opacity: 0.1 }}>
+                  <Ghost size={52} style={{ color: card.color }} />
                 </div>
-                <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: card.color }}>{card.diff}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <div style={{ padding: 10, borderRadius: 12, background: card.bg }}>
+                    <Icon size={18} style={{ color: card.color, display: 'block' }} />
+                  </div>
+                  <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: card.color }}>{card.diff}</span>
+                </div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--slate-500)', marginBottom: 4 }}>{card.label}</div>
+                <div className="mono" style={{ fontSize: 36, fontWeight: 300, color: 'white', lineHeight: 1 }}>{formatCurrency(card.value, 'ARS')}</div>
               </div>
-              <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 4 }}>{card.label}</p>
-              <p className="text-lg mono" style={{ color: 'var(--text)', fontWeight: 800, lineHeight: 1.2 }}>{formatCurrency(card.value, 'ARS')}</p>
             </motion.div>
           )
         })}
       </div>
 
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass rounded-2xl p-5">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>Punto de equilibrio mensual</p>
-            <p className="text-sm mt-0.5" style={{ color: 'var(--text)', fontWeight: 600 }}>{formatCurrency(MOCK_EQUILIBRIO.actual, 'ARS')} / {formatCurrency(MOCK_EQUILIBRIO.target, 'ARS')}</p>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+        <div className="glass" style={{ borderRadius: '2rem', padding: '1.75rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--slate-500)', marginBottom: 6 }}>Punto de Equilibrio Mensual</div>
+              <div style={{ fontSize: 22, fontWeight: 300, color: 'white' }}>
+                <span className="mono">{formatCurrency(1350000, 'ARS')}</span>
+                <span style={{ color: 'var(--slate-600)', fontSize: 16 }}> / </span>
+                <span className="mono" style={{ fontSize: 16, color: 'var(--slate-400)' }}>{formatCurrency(1200000, 'ARS')}</span>
+              </div>
+            </div>
+            <div className="mono" style={{ fontSize: 28, fontWeight: 700, color: 'var(--pink)' }}>{pct}%</div>
           </div>
-          <span className="text-sm" style={{ color: pct >= 100 ? 'var(--red)' : 'var(--green)', fontWeight: 800 }}>{pct}%</span>
+          <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 999 }}>
+            <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(pct, 100)}%` }} transition={{ duration: 1, ease: 'easeOut', delay: 0.4 }}
+              style={{ height: '100%', borderRadius: 999, background: 'var(--pink)', boxShadow: '0 0 10px rgba(236,72,153,0.4)' }} />
+          </div>
+          <div style={{ fontSize: 11, marginTop: 8, color: 'var(--slate-500)', fontWeight: 500 }}>Superaste el punto de equilibrio en {formatCurrency(150000, 'ARS')}</div>
         </div>
-        <div className="h-2 rounded-full" style={{ background: 'var(--surface2)' }}>
-          <motion.div className="h-full rounded-full" style={{ background: pct >= 100 ? 'var(--red)' : 'var(--green)' }}
-            initial={{ width: 0 }} animate={{ width: `${Math.min(pct, 100)}%` }} transition={{ duration: 0.8, ease: 'easeOut', delay: 0.4 }} />
-        </div>
-        <p className="mt-2" style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-          {pct < 100
-            ? `Te faltan ${formatCurrency(MOCK_EQUILIBRIO.target - MOCK_EQUILIBRIO.actual, 'ARS')} para cubrir tus costos fijos`
-            : `Superaste el punto de equilibrio en ${formatCurrency(MOCK_EQUILIBRIO.actual - MOCK_EQUILIBRIO.target, 'ARS')}`}
-        </p>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="glass rounded-2xl p-5 md:col-span-2">
-          <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 16 }}>Evolución 6 meses</p>
-          <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={MOCK_EVOLUCION} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="gIngresos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#00c896" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#00c896" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="gEgresos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="mes" tick={{ fill: '#5c6b7a', fontSize: 10, fontWeight: 700 }} axisLine={false} tickLine={false} />
-                <YAxis hide />
-                <Tooltip content={<TT />} />
-                <Area type="monotone" dataKey="ingresos" name="Ingresos" stroke="#00c896" strokeWidth={2} fill="url(#gIngresos)" />
-                <Area type="monotone" dataKey="egresos" name="Egresos" stroke="#f43f5e" strokeWidth={2} fill="url(#gEgresos)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass rounded-2xl p-5">
-          <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 16 }}>Por categoría</p>
-          <div className="h-28">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={MOCK_CATEGORIAS} cx="50%" cy="50%" innerRadius={32} outerRadius={50} dataKey="value" strokeWidth={0}>
-                  {MOCK_CATEGORIAS.map((entry, index) => <Cell key={index} fill={entry.color} />)}
-                </Pie>
-                <Tooltip formatter={(v: any) => formatCurrency(v, 'ARS')} contentStyle={{ background: 'var(--surface2)', border: '1px solid var(--border2)', borderRadius: 12, fontSize: 11 }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="space-y-1.5 mt-2">
-            {MOCK_CATEGORIAS.slice(0, 4).map(c => (
-              <div key={c.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ background: c.color }} />
-                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-soft)' }}>{c.name}</span>
-                </div>
-                <span className="mono" style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)' }}>{formatCurrency(c.value, 'ARS')}</span>
+      <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.25 }}>
+        <div className="glass" style={{ borderRadius: '2.5rem', padding: '2rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 32 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--slate-500)' }}>Analisis Semanal de Movimientos</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[['may', 'Mayo 2026'], ['abr', 'Abril 2026']].map(([val, label]) => (
+                  <button key={val} onClick={() => setPeriod(val)}
+                    style={{ padding: '8px 16px', borderRadius: 12, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'Montserrat', cursor: 'pointer', transition: 'all 0.2s',
+                      background: period === val ? 'rgba(255,255,255,0.08)' : 'transparent',
+                      color: period === val ? 'white' : 'var(--slate-500)',
+                      border: period === val ? '1px solid rgba(255,255,255,0.12)' : '1px solid transparent' }}>{label}</button>
+                ))}
               </div>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="glass rounded-2xl p-5">
-        <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 16 }}>Últimos movimientos</p>
-        <div className="space-y-2">
-          {MOCK_ULTIMAS.map((tx, i) => (
-            <div key={i} className="flex items-center gap-3 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: tx.tipo === 'ingreso' ? 'var(--green-dim)' : 'var(--red-dim)' }}>
-                {tx.tipo === 'ingreso' ? <ArrowUpRight size={14} style={{ color: 'var(--green)' }} /> : <ArrowDownRight size={14} style={{ color: 'var(--red)' }} />}
+              <div style={{ display: 'flex', gap: 20 }}>
+                {[['#7c3aed', 'Fijos'], ['#ec4899', 'Variables']].map(([color, label]) => (
+                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: color }} />
+                    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--slate-400)' }}>{label}</span>
+                  </div>
+                ))}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm truncate" style={{ color: 'var(--text)', fontWeight: 600 }}>{tx.desc}</p>
-                <p style={{ fontSize: 10, color: 'var(--text-muted)' }}>{tx.cat} · {tx.fecha}</p>
-              </div>
-              <span className="mono shrink-0 text-sm" style={{ color: tx.tipo === 'ingreso' ? 'var(--green)' : 'var(--red)', fontWeight: 800 }}>
-                {tx.tipo === 'ingreso' ? '+' : '-'}{tx.usd ? formatCurrency(tx.monto, 'USD') : formatCurrency(tx.monto, 'ARS')}
-              </span>
             </div>
+          </div>
+          <div style={{ height: 280 }}>
+            <AnimatePresence mode="wait">
+              <motion.div key={period} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.3 }} style={{ height: '100%' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData[period]} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.9} /><stop offset="95%" stopColor="#7c3aed" stopOpacity={0.2} />
+                      </linearGradient>
+                      <linearGradient id="gI" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#ec4899" stopOpacity={0.9} /><stop offset="95%" stopColor="#ec4899" stopOpacity={0.2} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }} dy={12} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 9, fontWeight: 700 }} tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)} />
+                    <Tooltip content={<TT />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                    <Bar dataKey="Gastos" fill="url(#gG)" radius={[6,6,0,0]} barSize={26} animationDuration={1200} animationEasing="ease-in-out" />
+                    <Bar dataKey="Ingresos" fill="url(#gI)" radius={[6,6,0,0]} barSize={26} animationDuration={1200} animationEasing="ease-in-out" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--slate-500)', marginBottom: 4 }}>Historial Reciente</div>
+          <h3 style={{ fontSize: 26, fontWeight: 300, color: 'white' }}>Ultimos <span style={{ fontWeight: 500, fontStyle: 'italic' }}>Movimientos</span></h3>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {ULTIMAS.map((tx, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.06 }}>
+              <div className="glass" style={{ padding: '1rem 1.25rem', borderRadius: '1.5rem', display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', transition: 'border-color 0.2s' }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = '')}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  background: tx.tipo === 'ingreso' ? 'rgba(16,185,129,0.15)' : 'rgba(236,72,153,0.15)',
+                  border: `1px solid ${tx.tipo === 'ingreso' ? 'rgba(16,185,129,0.25)' : 'rgba(236,72,153,0.25)'}` }}>
+                  {tx.tipo === 'ingreso' ? <ArrowUpRight size={18} style={{ color: 'var(--emerald)' }} /> : <ArrowDownLeft size={18} style={{ color: 'var(--pink)' }} />}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.desc}</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--slate-500)', marginTop: 2 }}>{tx.cat} · {tx.fecha}</div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div className="mono" style={{ fontSize: 14, fontWeight: 700, color: tx.tipo === 'ingreso' ? 'var(--emerald)' : 'var(--pink)', display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end' }}>
+                    {tx.tipo === 'ingreso' ? <ArrowUpRight size={12} /> : <ArrowDownLeft size={12} />}
+                    {tx.tipo === 'ingreso' ? '+' : ''}{tx.usd ? formatCurrency(tx.monto, 'USD') : formatCurrency(tx.monto, 'ARS')}
+                  </div>
+                  <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 2,
+                    color: tx.scope === 'personal' ? '#60a5fa' : tx.scope === 'laboral' ? '#fbbf24' : '#a78bfa' }}>{tx.scope}</div>
+                </div>
+              </div>
+            </motion.div>
           ))}
         </div>
       </motion.div>

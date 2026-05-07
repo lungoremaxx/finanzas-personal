@@ -1,168 +1,78 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Plus, ArrowUpRight, ArrowDownRight, X } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Search, ArrowUpRight, ArrowDownLeft } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import type { TransactionType, Scope, Currency } from '@/types'
 
-const MOCK_TXS = [
-  { id: '1', desc: 'Comisión venta Valle Escondido', cat: 'RE/MAX', monto: 850000, fecha: '2026-05-05', tipo: 'ingreso' as TransactionType, scope: 'laboral' as Scope, cur: 'ARS' as Currency, cuenta: 'Galicia' },
-  { id: '2', desc: 'Supermercado Disco', cat: 'Alimentos', monto: 12500, fecha: '2026-05-06', tipo: 'egreso' as TransactionType, scope: 'personal' as Scope, cur: 'ARS' as Currency, cuenta: 'MP' },
-  { id: '3', desc: 'YPF combustible', cat: 'Transporte', monto: 28000, fecha: '2026-05-04', tipo: 'egreso' as TransactionType, scope: 'mixto' as Scope, cur: 'ARS' as Currency, cuenta: 'Galicia' },
-  { id: '4', desc: 'Payoneer recibo cliente', cat: 'Ingresos', monto: 320, fecha: '2026-05-02', tipo: 'ingreso' as TransactionType, scope: 'laboral' as Scope, cur: 'USD' as Currency, cuenta: 'Payoneer' },
-  { id: '5', desc: 'Expensas departamento', cat: 'Vivienda', monto: 45000, fecha: '2026-05-03', tipo: 'egreso' as TransactionType, scope: 'personal' as Scope, cur: 'ARS' as Currency, cuenta: 'Galicia' },
-  { id: '6', desc: 'Netflix', cat: 'Servicios', monto: 8500, fecha: '2026-05-01', tipo: 'egreso' as TransactionType, scope: 'personal' as Scope, cur: 'ARS' as Currency, cuenta: 'Galicia' },
-  { id: '7', desc: 'Almuerzo cliente', cat: 'Representación', monto: 18000, fecha: '2026-05-06', tipo: 'egreso' as TransactionType, scope: 'laboral' as Scope, cur: 'ARS' as Currency, cuenta: 'MP' },
+const TXS = [
+  { id: 1, desc: 'Comision venta Valle Escondido', cat: 'Laboral', monto: 850000, fecha: '2026-05-05', tipo: 'ingreso', scope: 'laboral', cur: 'ARS' },
+  { id: 2, desc: 'Supermercado Disco', cat: 'Alimentos', monto: 12500, fecha: '2026-05-06', tipo: 'egreso', scope: 'personal', cur: 'ARS' },
+  { id: 3, desc: 'YPF combustible', cat: 'Transporte', monto: 28000, fecha: '2026-05-04', tipo: 'egreso', scope: 'mixto', cur: 'ARS' },
+  { id: 4, desc: 'Payoneer recibo cliente', cat: 'Laboral', monto: 320, fecha: '2026-05-02', tipo: 'ingreso', scope: 'laboral', cur: 'USD' },
+  { id: 5, desc: 'Expensas departamento', cat: 'Vivienda', monto: 45000, fecha: '2026-05-03', tipo: 'egreso', scope: 'personal', cur: 'ARS' },
+  { id: 6, desc: 'Netflix', cat: 'Servicios', monto: 8500, fecha: '2026-05-01', tipo: 'egreso', scope: 'personal', cur: 'ARS' },
+  { id: 7, desc: 'Almuerzo con cliente', cat: 'Representacion', monto: 18000, fecha: '2026-05-06', tipo: 'egreso', scope: 'laboral', cur: 'ARS' },
 ]
 
-const SCOPE_COLORS: Record<Scope, string> = { personal: '#3b82f6', laboral: '#f59e0b', mixto: '#8b5cf6' }
-const SCOPE_LABELS: Record<Scope, string> = { personal: 'Personal', laboral: 'Laboral', mixto: 'Mixto' }
+const SC: Record<string, string> = { personal: '#60a5fa', laboral: '#fbbf24', mixto: '#a78bfa' }
 
 export function Transacciones() {
   const [search, setSearch] = useState('')
-  const [filterScope, setFilterScope] = useState<Scope | 'all'>('all')
-  const [showForm, setShowForm] = useState(false)
+  const [filter, setFilter] = useState('all')
 
-  const filtered = MOCK_TXS.filter(tx => {
-    const matchSearch = tx.desc.toLowerCase().includes(search.toLowerCase()) || tx.cat.toLowerCase().includes(search.toLowerCase())
-    const matchScope = filterScope === 'all' || tx.scope === filterScope
-    return matchSearch && matchScope
-  })
+  const filtered = TXS.filter(t =>
+    (filter === 'all' || t.tipo === filter) &&
+    (t.desc.toLowerCase().includes(search.toLowerCase()) || t.cat.toLowerCase().includes(search.toLowerCase()))
+  )
 
   return (
-    <div className="space-y-4 pb-24 md:pb-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl" style={{ color: 'var(--text)', fontWeight: 800 }}>Movimientos</h2>
-          <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>{filtered.length} transacciones</p>
-        </div>
-        <button onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs transition-all"
-          style={{ background: 'var(--green)', color: '#000', fontWeight: 700 }}>
-          <Plus size={14} /> Nueva
-        </button>
-      </div>
-
-      <div className="flex gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-48">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..."
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm outline-none"
-            style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }} />
-        </div>
-        <div className="flex gap-1 glass rounded-xl p-1">
-          {(['all', 'personal', 'laboral', 'mixto'] as const).map(s => (
-            <button key={s} onClick={() => setFilterScope(s)}
-              className="px-3 py-1.5 rounded-lg text-[10px] transition-all"
-              style={{ fontWeight: 700, textTransform: 'uppercase',
-                background: filterScope === s ? 'var(--surface2)' : 'transparent',
-                color: filterScope === s ? 'var(--text)' : 'var(--text-muted)',
-                border: filterScope === s ? '1px solid var(--border2)' : '1px solid transparent' }}>
-              {s === 'all' ? 'Todo' : SCOPE_LABELS[s]}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="glass rounded-2xl overflow-hidden">
-        <AnimatePresence>
-          {filtered.map((tx, i) => (
-            <motion.div key={tx.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 8 }} transition={{ delay: i * 0.04 }}
-              className="flex items-center gap-3 px-5 py-3.5 cursor-pointer"
-              style={{ borderBottom: i < filtered.length - 1 ? '1px solid var(--border)' : 'none' }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: tx.tipo === 'ingreso' ? 'var(--green-dim)' : 'var(--red-dim)' }}>
-                {tx.tipo === 'ingreso'
-                  ? <ArrowUpRight size={15} style={{ color: 'var(--green)' }} />
-                  : <ArrowDownRight size={15} style={{ color: 'var(--red)' }} />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm truncate" style={{ color: 'var(--text)', fontWeight: 600 }}>{tx.desc}</p>
-                  <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: 6,
-                    background: `${SCOPE_COLORS[tx.scope]}22`, color: SCOPE_COLORS[tx.scope] }}>
-                    {SCOPE_LABELS[tx.scope]}
-                  </span>
-                </div>
-                <p style={{ fontSize: 10, marginTop: 2, color: 'var(--text-muted)' }}>
-                  {tx.cat} · {tx.cuenta} · {formatDate(tx.fecha)}
-                </p>
-              </div>
-              <span className="mono shrink-0 text-sm" style={{ color: tx.tipo === 'ingreso' ? 'var(--green)' : 'var(--red)', fontWeight: 800 }}>
-                {tx.tipo === 'ingreso' ? '+' : '-'}{formatCurrency(tx.monto, tx.cur)}
-              </span>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-        {filtered.length === 0 && (
-          <div className="py-12 text-center" style={{ color: 'var(--text-muted)' }}>
-            <p className="text-sm" style={{ fontWeight: 600 }}>Sin resultados</p>
+    <div className="px-6 md:px-12 max-w-7xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16 }}>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--slate-500)', marginBottom: 4 }}>Historial Contable</div>
+            <h2 style={{ fontSize: 30, fontWeight: 300, color: 'white' }}>Todos los <span style={{ fontWeight: 500, fontStyle: 'italic' }}>Movimientos</span></h2>
           </div>
-        )}
+          <div style={{ display: 'flex', padding: 4, borderRadius: 16, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            {[['all','Todos'],['ingreso','Ingresos'],['egreso','Gastos']].map(([val, label]) => (
+              <button key={val} onClick={() => setFilter(val)}
+                style={{ padding: '8px 20px', borderRadius: 12, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Montserrat', cursor: 'pointer', transition: 'all 0.2s', border: 'none',
+                  background: filter === val ? 'white' : 'transparent', color: filter === val ? 'black' : 'var(--slate-500)',
+                  boxShadow: filter === val ? '0 2px 8px rgba(255,255,255,0.1)' : 'none' }}>{label}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{ position: 'relative' }}>
+          <Search size={15} style={{ position: 'absolute', left: 20, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-500)' }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar movimientos..."
+            style={{ width: '100%', height: 56, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, paddingLeft: 48, paddingRight: 20, fontSize: 13, fontWeight: 500, outline: 'none', fontFamily: 'Montserrat', transition: 'border-color 0.2s' }}
+            onFocus={e => (e.target.style.borderColor = 'var(--violet)')} onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.06)')} />
+        </div>
       </div>
-
-      <AnimatePresence>
-        {showForm && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
-            onClick={(e) => e.target === e.currentTarget && setShowForm(false)}>
-            <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
-              className="glass-strong rounded-2xl p-6 w-full max-w-md">
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="text-base" style={{ color: 'var(--text)', fontWeight: 800 }}>Nueva transacción</h3>
-                <button onClick={() => setShowForm(false)} style={{ color: 'var(--text-muted)' }}><X size={18} /></button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {filtered.map((t, i) => (
+          <motion.div key={t.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+            <div className="glass" style={{ padding: '1rem 1.25rem', borderRadius: '1.5rem', display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', transition: 'border-color 0.2s' }}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)')} onMouseLeave={e => (e.currentTarget.style.borderColor = '')}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                background: t.tipo === 'ingreso' ? 'rgba(16,185,129,0.15)' : 'rgba(236,72,153,0.15)',
+                border: `1px solid ${t.tipo === 'ingreso' ? 'rgba(16,185,129,0.25)' : 'rgba(236,72,153,0.25)'}` }}>
+                {t.tipo === 'ingreso' ? <ArrowUpRight size={17} style={{ color: 'var(--emerald)' }} /> : <ArrowDownLeft size={17} style={{ color: 'var(--pink)' }} />}
               </div>
-              <div className="flex gap-2 mb-4">
-                {(['ingreso', 'egreso'] as const).map(t => (
-                  <button key={t} className="flex-1 py-2.5 rounded-xl text-xs transition-all"
-                    style={{ fontWeight: 700, textTransform: 'uppercase',
-                      background: t === 'ingreso' ? 'var(--green-dim)' : 'var(--red-dim)',
-                      color: t === 'ingreso' ? 'var(--green)' : 'var(--red)',
-                      border: `1px solid ${t === 'ingreso' ? 'var(--green)' : 'var(--red)'}` }}>
-                    {t}
-                  </button>
-                ))}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.desc}</div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--slate-500)', marginTop: 2 }}>{t.cat} · {formatDate(t.fecha)}</div>
               </div>
-              <div className="space-y-3">
-                <input placeholder="Descripción" className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
-                  style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }} />
-                <div className="flex gap-2">
-                  <input placeholder="Monto" type="number" className="flex-1 px-4 py-2.5 rounded-xl text-sm outline-none"
-                    style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }} />
-                  <select className="px-3 py-2.5 rounded-xl text-sm outline-none"
-                    style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }}>
-                    <option>ARS</option><option>USD</option>
-                  </select>
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div className="mono" style={{ fontSize: 14, fontWeight: 700, color: t.tipo === 'ingreso' ? 'var(--emerald)' : 'var(--pink)', display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end' }}>
+                  {t.tipo === 'ingreso' ? <ArrowUpRight size={12} /> : <ArrowDownLeft size={12} />}
+                  {t.tipo === 'ingreso' ? '+' : ''}{formatCurrency(t.monto, t.cur as any)}
                 </div>
-                <select className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
-                  style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }}>
-                  <option value="">Categoría</option>
-                  <option>Alimentos</option><option>Transporte</option><option>Vivienda</option>
-                  <option>Servicios</option><option>RE/MAX</option>
-                </select>
-                <div className="flex gap-2">
-                  <select className="flex-1 px-4 py-2.5 rounded-xl text-sm outline-none"
-                    style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }}>
-                    <option>Galicia</option><option>Mercado Pago</option>
-                    <option>Payoneer</option><option>Belo</option><option>Efectivo</option>
-                  </select>
-                  <select className="flex-1 px-4 py-2.5 rounded-xl text-sm outline-none"
-                    style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }}>
-                    <option>Personal</option><option>Laboral</option><option>Mixto</option>
-                  </select>
-                </div>
-                <input type="date" className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
-                  style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }} />
+                <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: SC[t.scope], marginTop: 2 }}>{t.scope}</div>
               </div>
-              <button className="w-full mt-5 py-3 rounded-xl text-sm transition-all"
-                style={{ background: 'var(--green)', color: '#000', fontWeight: 700 }}>
-                Guardar
-              </button>
-            </motion.div>
+            </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        ))}
+      </div>
     </div>
   )
 }
