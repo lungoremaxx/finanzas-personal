@@ -3,98 +3,76 @@ import { motion } from 'framer-motion'
 import { formatCurrency } from '@/lib/utils'
 
 export function Configuracion() {
-  const [equilibrioARS, setEquilibrioARS] = useState(1200000)
-  const [equilibrioUSD, setEquilibrioUSD] = useState(500)
-  const [cotizacion, setCotizacion] = useState(1050)
-  const [monedaPpal, setMonedaPpal] = useState<'ARS' | 'USD'>('ARS')
+  const [eqARS, setEqARS] = useState(1200000)
+  const [eqUSD, setEqUSD] = useState(500)
+  const [cotiz, setCotiz] = useState(1050)
+  const [moneda, setMoneda] = useState('ARS')
+
+  const inp = { height: 48, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '0 16px', fontSize: 14, fontFamily: 'Montserrat', outline: 'none', width: '100%', transition: 'border-color 0.2s' }
+  const lbl = { fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.15em', color: 'var(--slate-500)', display: 'block', marginBottom: 8, marginLeft: 2 }
+
+  const sections = [
+    { title: 'Perfil', content: (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ width: 60, height: 60, borderRadius: 18, background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>🏡</div>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: 'white' }}>Martin Trejo</div>
+          <div style={{ fontSize: 11, color: 'var(--slate-500)', fontWeight: 600, marginTop: 2 }}>Agente Inmobiliario - Cordoba, Argentina</div>
+        </div>
+      </div>
+    )},
+    { title: 'Punto de Equilibrio Mensual', content: (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <p style={{ fontSize: 12, color: 'var(--slate-500)', fontWeight: 500 }}>El minimo que necesitas ganar para cubrir tus costos fijos.</p>
+        <div><label style={lbl}>En pesos (ARS)</label><input type="number" value={eqARS} onChange={e => setEqARS(+e.target.value)} style={inp} className="mono" onFocus={e => (e.target.style.borderColor='var(--violet)')} onBlur={e => (e.target.style.borderColor='rgba(255,255,255,0.08)')} /><div style={{ fontSize: 11, color: 'var(--emerald)', marginTop: 4, fontWeight: 600 }}>= {formatCurrency(eqARS, 'ARS')}</div></div>
+        <div><label style={lbl}>En dolares (USD)</label><input type="number" value={eqUSD} onChange={e => setEqUSD(+e.target.value)} style={inp} className="mono" onFocus={e => (e.target.style.borderColor='var(--violet)')} onBlur={e => (e.target.style.borderColor='rgba(255,255,255,0.08)')} /><div style={{ fontSize: 11, color: 'var(--emerald)', marginTop: 4, fontWeight: 600 }}>= {formatCurrency(eqUSD, 'USD')}</div></div>
+      </div>
+    )},
+    { title: 'Monedas', content: (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div>
+          <label style={lbl}>Moneda principal del dashboard</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {['ARS','USD'].map(m => (
+              <button key={m} onClick={() => setMoneda(m)} style={{ flex: 1, height: 44, borderRadius: 12, fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', background: moneda === m ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.05)', color: moneda === m ? 'var(--violet-light)' : 'var(--slate-500)', border: `1px solid ${moneda === m ? 'var(--violet)' : 'transparent'}` }}>{m}</button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label style={lbl}>Cotizacion USD / ARS</label>
+          <input type="number" value={cotiz} onChange={e => setCotiz(+e.target.value)} style={inp} className="mono" onFocus={e => (e.target.style.borderColor='var(--violet)')} onBlur={e => (e.target.style.borderColor='rgba(255,255,255,0.08)')} />
+          <div style={{ fontSize: 11, color: 'var(--slate-500)', marginTop: 4, fontWeight: 600 }}>1 USD = {formatCurrency(cotiz, 'ARS')}</div>
+        </div>
+      </div>
+    )},
+    { title: 'Cuentas Conectadas', content: (
+      <div>{[['Banco Galicia','🏦','#0066cc'],['Mercado Pago','📱','#00bcd4'],['Payoneer','💸','#ff4d4d'],['Belo','⚡','#8b5cf6'],['Efectivo','💵','#10b981']].map(([n,e,c], i, arr) => (
+        <div key={n as string} style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 12, paddingBottom: 12, borderBottom: i < arr.length-1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: `${c}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{e}</div>
+          <div style={{ flex: 1, fontSize: 14, fontWeight: 700, color: 'white' }}>{n}</div>
+          <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 8px', borderRadius: 6, background: 'rgba(16,185,129,0.15)', color: 'var(--emerald)' }}>Activa</span>
+        </div>
+      ))}</div>
+    )},
+  ]
 
   return (
-    <div className="space-y-4 pb-24 md:pb-6">
-      <h2 className="text-xl" style={{ color: 'var(--text)', fontWeight: 800 }}>Configuración</h2>
-
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-2xl p-5">
-        <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 12 }}>Perfil</p>
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
-            style={{ background: 'var(--green-dim)', border: '1px solid var(--green)' }}>🏡</div>
-          <div>
-            <p className="text-base" style={{ color: 'var(--text)', fontWeight: 800 }}>Martín Trejo</p>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Agente Inmobiliario · Córdoba, Argentina</p>
+    <div className="px-6 md:px-12 max-w-7xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div>
+        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--slate-500)', marginBottom: 4 }}>Ajustes</div>
+        <h2 style={{ fontSize: 30, fontWeight: 300, color: 'white' }}>Configuracion <span style={{ fontWeight: 500, fontStyle: 'italic' }}>Personal</span></h2>
+      </div>
+      {sections.map(({ title, content }, i) => (
+        <motion.div key={title} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
+          <div className="glass" style={{ borderRadius: '2rem', padding: '1.5rem' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--slate-500)', marginBottom: 14 }}>{title}</div>
+            {content}
           </div>
-        </div>
-      </motion.div>
-
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass rounded-2xl p-5">
-        <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 4 }}>Punto de equilibrio mensual</p>
-        <p style={{ fontSize: 12, color: 'var(--text-soft)', marginBottom: 16 }}>El mínimo que necesitás ganar para cubrir tus costos fijos</p>
-        <div className="space-y-3">
-          <div>
-            <label style={{ fontSize: 10, display: 'block', marginBottom: 4, color: 'var(--text-muted)', fontWeight: 700 }}>En pesos (ARS)</label>
-            <input type="number" value={equilibrioARS} onChange={e => setEquilibrioARS(Number(e.target.value))}
-              className="w-full px-4 py-2.5 rounded-xl text-sm outline-none mono"
-              style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }} />
-            <p style={{ fontSize: 10, color: 'var(--green)', marginTop: 4 }}>= {formatCurrency(equilibrioARS, 'ARS')}</p>
-          </div>
-          <div>
-            <label style={{ fontSize: 10, display: 'block', marginBottom: 4, color: 'var(--text-muted)', fontWeight: 700 }}>En dólares (USD)</label>
-            <input type="number" value={equilibrioUSD} onChange={e => setEquilibrioUSD(Number(e.target.value))}
-              className="w-full px-4 py-2.5 rounded-xl text-sm outline-none mono"
-              style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }} />
-            <p style={{ fontSize: 10, color: 'var(--green)', marginTop: 4 }}>= {formatCurrency(equilibrioUSD, 'USD')}</p>
-          </div>
-        </div>
-      </motion.div>
-
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass rounded-2xl p-5">
-        <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 12 }}>Monedas</p>
-        <div className="space-y-4">
-          <div>
-            <label style={{ fontSize: 10, display: 'block', marginBottom: 8, color: 'var(--text-muted)', fontWeight: 700 }}>Moneda principal del dashboard</label>
-            <div className="flex gap-2">
-              {(['ARS', 'USD'] as const).map(m => (
-                <button key={m} onClick={() => setMonedaPpal(m)} className="flex-1 py-2.5 rounded-xl text-sm transition-all"
-                  style={{ fontWeight: 700, background: monedaPpal === m ? 'var(--green-dim)' : 'var(--surface2)',
-                    color: monedaPpal === m ? 'var(--green)' : 'var(--text-muted)',
-                    border: `1px solid ${monedaPpal === m ? 'var(--green)' : 'transparent'}` }}>
-                  {m}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label style={{ fontSize: 10, display: 'block', marginBottom: 4, color: 'var(--text-muted)', fontWeight: 700 }}>Cotización USD / ARS (manual)</label>
-            <input type="number" value={cotizacion} onChange={e => setCotizacion(Number(e.target.value))}
-              className="w-full px-4 py-2.5 rounded-xl text-sm outline-none mono"
-              style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }} />
-            <p style={{ fontSize: 10, color: 'var(--text-soft)', marginTop: 4 }}>1 USD = {formatCurrency(cotizacion, 'ARS')}</p>
-          </div>
-        </div>
-      </motion.div>
-
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass rounded-2xl p-5">
-        <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 12 }}>Cuentas conectadas</p>
-        <div className="space-y-2">
-          {[
-            { nombre: 'Banco Galicia', color: '#0066cc', emoji: '🏦', estado: 'Activa' },
-            { nombre: 'Mercado Pago', color: '#00bcd4', emoji: '📱', estado: 'Activa' },
-            { nombre: 'Payoneer', color: '#ff4d4d', emoji: '💸', estado: 'Activa' },
-            { nombre: 'Belo', color: '#8b5cf6', emoji: '⚡', estado: 'Activa' },
-            { nombre: 'Efectivo', color: '#00c896', emoji: '💵', estado: 'Manual' },
-          ].map((c, i) => (
-            <div key={c.nombre} className="flex items-center gap-3 py-2.5"
-              style={{ borderBottom: i < 4 ? '1px solid var(--border)' : 'none' }}>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center text-base" style={{ background: `${c.color}22` }}>{c.emoji}</div>
-              <span className="flex-1 text-sm" style={{ color: 'var(--text)', fontWeight: 600 }}>{c.nombre}</span>
-              <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 8, background: 'var(--green-dim)', color: 'var(--green)', fontWeight: 700 }}>{c.estado}</span>
-            </div>
-          ))}
-        </div>
-      </motion.div>
-
-      <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-        className="w-full py-3 rounded-xl text-sm transition-all"
-        style={{ background: 'var(--green)', color: '#000', fontWeight: 700 }}>
-        Guardar cambios
+        </motion.div>
+      ))}
+      <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+        style={{ width: '100%', height: 60, borderRadius: 24, background: 'white', color: 'black', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', fontFamily: 'Montserrat', cursor: 'pointer', border: 'none', boxShadow: '0 4px 20px rgba(255,255,255,0.1)' }}>
+        Guardar Cambios
       </motion.button>
     </div>
   )
